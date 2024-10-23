@@ -18,7 +18,7 @@ def open_file(window, text_edit, file_path_var):
 
 def save_file(window, text_edit, file_path_var):
     filepath = file_path_var.get()
-    # If no filepath is set, prompt the user to choose one (like Save As)
+    # If no filepath is set, prompt the user to choose one
     if not filepath:
         save_as_file(window, text_edit, file_path_var)
     else:
@@ -41,7 +41,7 @@ def save_as_file(window, text_edit, file_path_var):
     file_path_var.set(filepath)
     window.title(f"Saved As: {filepath}")
 
-def select_all_text(event, text_edit):
+def select_all_text(text_edit):
     # Select all text, ignoring trailing newlines
     text_edit.tag_add("sel", "1.0", "end-1c")
     return "break"  # Prevent default behavior
@@ -54,12 +54,10 @@ def find_text(query, text_edit):
             # Search for the query string within the text
             start_pos = text_edit.search(query, start_pos, stopindex=tk.END, nocase=True)  
             if not start_pos:  # If no more occurrences are found, break the loop
-                break
-            
+                break   
             end_pos = f"{start_pos}+{len(query)}c"  # Determine the end position of the found text
             text_edit.tag_add("highlight", start_pos, end_pos)  # Highlight the found text
             start_pos = end_pos  # Move past the current found text for the next search
-
         # Set the highlighting style
         text_edit.tag_config("highlight", background="yellow", foreground="black")
 
@@ -74,6 +72,13 @@ def toggle_theme(text_edit):
         text_edit.config(bg="black", fg="white", insertbackground="white")
     else:
         text_edit.config(bg="white", fg="black", insertbackground="black")
+
+def update_status(text_edit, status_label):
+    content = text_edit.get(1.0, tk.END)
+    words = len(content.split())
+    char_count = len(content) - 1  # Subtract 1 to exclude the final newline character
+    row, col = text_edit.index(tk.INSERT).split(".")
+    status_label.config(text=f"Line: {row}   Column: {col}   Words: {words}   Characters: {char_count}")
 
 def main():
     window = tk.Tk()
@@ -108,8 +113,13 @@ def main():
     window.bind("<Control-o>", lambda x: open_file(window, text_edit, file_path_var))
     window.bind("<Control-s>", lambda x: save_file(window, text_edit, file_path_var))
     window.bind("<Control-S>", lambda x: save_as_file(window, text_edit, file_path_var)) # Control+Shift+s is interpreted as Control+S
-    text_edit.bind("<Control-a>", lambda x: select_all_text(x, text_edit))
-    window.bind("<Control-f>", lambda event: prompt_find_text(text_edit))
+    window.bind("<Control-f>", lambda x: prompt_find_text(text_edit))
+
+    text_edit.bind("<Control-a>", lambda x: select_all_text(text_edit))
+    text_edit.bind("<KeyRelease>", lambda x: update_status(text_edit, status_label))
+
+    status_label = tk.Label(window, text="Line: 1   Column: 1", anchor="w")
+    status_label.grid(row=2, column=0, columnspan=2, sticky="ew")
 
     window.mainloop()
 
