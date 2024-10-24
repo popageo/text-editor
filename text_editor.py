@@ -41,11 +41,6 @@ def save_as_file(window, text_edit, file_path_var):
     file_path_var.set(filepath)
     window.title(f"Saved As: {filepath}")
 
-def select_all_text(text_edit):
-    # Select all text, ignoring trailing newlines
-    text_edit.tag_add("sel", "1.0", "end-1c")
-    return "break"  # Prevent default behavior
-
 def find_text(query, text_edit):
     text_edit.tag_remove("highlight", "1.0", tk.END)  # Clear existing highlights
     if query:  # If there is a query
@@ -77,6 +72,23 @@ def change_font(text_edit, font_family_var, font_size_var):
     new_font = (font_family_var.get(), font_size_var.get())
     text_edit.config(font=new_font)
 
+def select_all_text(text_edit):
+    # Select all text, ignoring trailing newlines
+    text_edit.tag_add("sel", "1.0", "end-1c")
+    return "break"  # Prevent default behavior
+
+def perform_undo(text_edit):
+    try:
+        text_edit.edit_undo()
+    except tk.TclError:
+        pass  # Ignore error if there's nothing to undo
+
+def perform_redo(text_edit):
+    try:
+        text_edit.edit_redo()
+    except tk.TclError:
+        pass  # Ignore error if there's nothing to redo
+
 def update_status(text_edit, status_label):
     content = text_edit.get(1.0, tk.END)
     words = len(content.split())
@@ -95,7 +107,7 @@ def main():
 
     file_path_var = tk.StringVar()  # Stores the current file path
 
-    text_edit = tk.Text(window, font="Helvetica 18", bg="white", fg="black", insertbackground="black")
+    text_edit = tk.Text(window, font="Helvetica 18", bg="white", fg="black", insertbackground="black", undo=True)
     text_edit.grid(row=1, column=1, sticky="nsew")
 
     frame = tk.Frame(window, relief=tk.RAISED, bd=2)
@@ -129,6 +141,10 @@ def main():
     window.bind("<Control-s>", lambda _: save_file(window, text_edit, file_path_var))
     window.bind("<Control-S>", lambda _: save_as_file(window, text_edit, file_path_var)) # Control+Shift+s is interpreted as Control+S
     window.bind("<Control-f>", lambda _: prompt_find_text(text_edit))
+
+    # Bind Undo and Redo shortcuts
+    window.bind("<Control-z>", lambda _: perform_undo(text_edit))
+    window.bind("<Control-y>", lambda _: perform_redo(text_edit))
 
     text_edit.bind("<Control-a>", lambda _: select_all_text(text_edit))
     text_edit.bind("<KeyRelease>", lambda _: update_status(text_edit, status_label))
