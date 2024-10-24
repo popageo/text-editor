@@ -55,8 +55,8 @@ def find_text(query, text_edit):
             start_pos = text_edit.search(query, start_pos, stopindex=tk.END, nocase=True)  
             if not start_pos:  # If no more occurrences are found, break the loop
                 break   
-            end_pos = f"{start_pos}+{len(query)}c"  # Determine the end position of the found text
-            text_edit.tag_add("highlight", start_pos, end_pos)  # Highlight the found text
+            end_pos = f"{start_pos}+{len(query)}c"  # Determine the end position of the text found
+            text_edit.tag_add("highlight", start_pos, end_pos)  # Highlight the text found
             start_pos = end_pos  # Move past the current found text for the next search
         # Set the highlighting style
         text_edit.tag_config("highlight", background="yellow", foreground="black")
@@ -73,6 +73,10 @@ def toggle_theme(text_edit):
     else:
         text_edit.config(bg="white", fg="black", insertbackground="black")
 
+def change_font(text_edit, font_family_var, font_size_var):
+    new_font = (font_family_var.get(), font_size_var.get())
+    text_edit.config(font=new_font)
+
 def update_status(text_edit, status_label):
     content = text_edit.get(1.0, tk.END)
     words = len(content.split())
@@ -83,12 +87,11 @@ def update_status(text_edit, status_label):
 def main():
     window = tk.Tk()
     window.title("Text Editor")
-    # window.rowconfigure(1, minsize=400)
-    # window.columnconfigure(1, minsize=400)
-    window.grid_columnconfigure(1, weight=1)  # Ensure column 1 expands with the window
+    window.geometry("800x600")  # Set a fixed window size
+    window.grid_columnconfigure(1, weight=1)  # Ensure column expands with the window
     window.grid_rowconfigure(1, weight=1)
 
-    window.minsize(400, 400)
+    window.minsize(600, 400)
 
     file_path_var = tk.StringVar()  # Stores the current file path
 
@@ -106,21 +109,34 @@ def main():
     save_button.grid(row=0, column=1, padx=5, pady=5)
     save_as_button.grid(row=0, column=2, padx=5, pady=5)
     find_button.grid(row=0, column=3, padx=5, pady=5)
-    toggle_button.grid(row=0, column=4, padx=5, pady=5, sticky="e")
+    toggle_button.grid(row=0, column=4, padx=5, pady=5)
+
+    # Font customization dropdown menus
+    font_family_var = tk.StringVar(value="Helvetica")
+    font_size_var = tk.IntVar(value=18)
+
+    font_families = ["Helvetica", "Arial", "Courier", "Times New Roman", "Verdana"]
+    font_sizes = [10, 12, 14, 16, 18, 20, 24, 28, 32]
+
+    font_family_menu = tk.OptionMenu(frame, font_family_var, *font_families, command=lambda _: change_font(text_edit, font_family_var, font_size_var))
+    font_family_menu.grid(row=0, column=5, padx=0, pady=0)
+    font_size_menu = tk.OptionMenu(frame, font_size_var, *font_sizes, command=lambda _: change_font(text_edit, font_family_var, font_size_var))
+    font_size_menu.grid(row=0, column=6, padx=0, pady=0)
 
     frame.grid(row=0, column=0, columnspan=2, sticky="ew")  # Make the frame expand horizontally
 
-    window.bind("<Control-o>", lambda x: open_file(window, text_edit, file_path_var))
-    window.bind("<Control-s>", lambda x: save_file(window, text_edit, file_path_var))
-    window.bind("<Control-S>", lambda x: save_as_file(window, text_edit, file_path_var)) # Control+Shift+s is interpreted as Control+S
-    window.bind("<Control-f>", lambda x: prompt_find_text(text_edit))
+    window.bind("<Control-o>", lambda _: open_file(window, text_edit, file_path_var))
+    window.bind("<Control-s>", lambda _: save_file(window, text_edit, file_path_var))
+    window.bind("<Control-S>", lambda _: save_as_file(window, text_edit, file_path_var)) # Control+Shift+s is interpreted as Control+S
+    window.bind("<Control-f>", lambda _: prompt_find_text(text_edit))
 
-    text_edit.bind("<Control-a>", lambda x: select_all_text(text_edit))
-    text_edit.bind("<KeyRelease>", lambda x: update_status(text_edit, status_label))
+    text_edit.bind("<Control-a>", lambda _: select_all_text(text_edit))
+    text_edit.bind("<KeyRelease>", lambda _: update_status(text_edit, status_label))
 
-    status_label = tk.Label(window, text="Line: 1   Column: 1", anchor="w")
+    status_label = tk.Label(window, text="Line: 1   Column: 1   Words: 0   Characters: 0", anchor="w")
     status_label.grid(row=2, column=0, columnspan=2, sticky="ew")
 
     window.mainloop()
 
-main()
+if __name__ == "__main__":
+    main()
